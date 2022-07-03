@@ -1,0 +1,497 @@
+﻿Build1=Default,ir.electroboard.wifisleep
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=appcompat
+Library2=core
+Library3=serial
+Library4=threading
+Library5=togglelibrary
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=11.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 2
+	#VersionName: 2
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: True
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim s1 As Serial
+	Dim Timer1 As Timer
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private LblBlth As Label
+	Private Lblwifi As Label
+	Private LblPhoneHH As Label
+	Private LblPhoneHM As Label
+	Private LblPhoneMM As Label
+	Private LblPhoneMS As Label
+	Private LblPhoneSS As Label
+	Private Label1 As Label
+''	Private RadioBTon As RadioButton
+''	Private RadioBToff As RadioButton
+	Private RbtnMan As RadioButton
+	Private RbtnAuto As RadioButton
+	Private Panel As Panel
+	Private Panel1 As Panel
+	Private LblCan As Label
+'	Private LblDes As Label
+	Private LblDevice As Label
+	Private EdtWifiHH As EditText
+	Private EdtWifiMM As EditText
+	Private EdtWifiSS As EditText
+	Private LblWifiHM As Label
+	Private LblWifiMS As Label
+	Private LblSave As Label
+	Private LblBack As Label
+	Private LblNext As Label
+	
+	Dim tw As TextWriter
+	Dim tr As TextReader
+	
+	Dim thread1 As Thread
+	Dim thread2 As Thread
+	Dim thread3 As Thread
+	
+	Dim Bt_input As String
+	Dim test2 As String
+	Dim turn_bluetooth As Toggle
+	Dim BT_check As Boolean : BT_check = True
+	Dim wifi As Boolean : wifi = False
+	Dim check_connect As Boolean : check_connect = False
+	Dim SettingFlag As Int : SettingFlag = 0
+	Dim Skiplevel As Boolean : Skiplevel = False
+	
+	
+	Timer1.Initialize("Timer1",1000)
+	Timer1.Enabled = True
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	thread1.Initialise("trd1")
+	thread2.Initialise("trd2")
+	thread3.Initialise("trd3")
+	
+	LblBlth.Text = Chr(0xF294)		'bluetooth not connect
+	
+	LblPhoneHH.Visible = False
+	LblPhoneHM.Visible = False
+	LblPhoneMM.Visible = False
+	LblPhoneMS.Visible = False
+	LblPhoneSS.Visible = False
+	
+	RbtnMan.Text = "Manual"
+	RbtnMan.Visible = False
+	RbtnAuto.Text = "Automatic"
+	RbtnAuto.Visible = False
+'	
+'	LblDes.Text = "Bluetooth Status"
+'	LblDes.Visible = False
+'	LblDes.TextColor = Colors.White
+'	RadioBTon.Text = "Bluetooth ON"
+'	RadioBTon.Visible = False
+'	RadioBToff.Text = "Bluetooth OFF"
+'	RadioBToff.Visible = False
+	
+	Panel.Visible = False
+	Panel1.Visible = False
+	
+	'LblCan.Text = Chr(0xF05C)		'Cansel icon
+	LblCan.visible = False
+	
+	'LblBack.Text = Chr(0xF190)		'Back icon
+	LblBack.Visible = False
+	
+	'LblNext.Text = Chr(0xF18E)		'Next icon
+	LblNext.visible = False
+	
+	'LblSave.Text = Chr(0xF013)		'Setting icon
+	'LblSave.Text = Chr(0xF058)		'Save icon
+	LblSave.Visible = False
+	
+	Lblwifi.Visible = False
+	Lblwifi.Visible = False
+	
+	Lblwifi.Enabled = False
+	Lblwifi.Enabled = False
+	
+	LblDevice.Visible = False
+	
+	EdtWifiHH.Visible = False
+	EdtWifiMM.Visible = False
+	EdtWifiSS.Visible = False
+	LblWifiHM.Visible = False
+	LblWifiMS.Visible = False
+	
+	If s1.IsInitialized = False Then
+		s1.Initialize("serial1")
+	End If
+End Sub
+
+Sub Activity_Resume
+	If s1.IsEnabled = False Then
+		turn_bluetooth.TurnBluetoothOn
+		ToastMessageShow("bluetooth Turn on",False)
+	Else
+		s1.Listen
+	End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Private Sub LblBlth_Click
+	If check_connect=False Then
+		Dim MapBT As Map
+		Dim ListBT As List
+		Dim result As Int
+		MapBT.Initialize
+		ListBT.Initialize
+		MapBT = s1.GetPairedDevices
+		For i=0 To MapBT.Size-1
+			ListBT.Add(MapBT.GetKeyAt(i))
+		Next
+		result = InputList(ListBT,"Select Device",-1)
+		If result <> DialogResponse.CANCEL Then
+			s1.Connect(MapBT.Get(ListBT.Get(result)))
+		End If
+	Else
+
+		LblBlth.Text = Chr(0xF294)		'bluetooth not connect
+		LblSave.Visible = False
+		LblBack.Visible = False
+		Label1.Visible = False
+		Lblwifi.Visible = False
+		RbtnMan.Visible = False
+		RbtnAuto.Visible = False
+'		LblDes.Visible = False
+'		RadioBTon.Visible = False
+'		RadioBToff.Visible = False
+		check_connect=False
+		s1.Disconnect
+		thread1.Interrupt
+	End If
+End Sub
+
+Sub serial1_Connected (Success As Boolean)
+	If Success=True Then
+		tw.Initialize(s1.OutputStream)
+		tr.Initialize(s1.InputStream)
+		
+		LblSave.Visible = True
+		
+		LblBack.Text = Chr(0xF0E2)		'Restart
+		LblBack.Visible = True
+		Label1.Visible = True
+		Lblwifi.Visible = True
+		RbtnMan.Visible = True
+		RbtnAuto.Visible = True
+		check_connect = True
+'		LblBlth.Text = "CONNECTED"
+		LblBlth.Text = Chr(0xF293)		'bluetooth  connected
+'		LblBlth.TextColor = Colors.Green
+		
+		thread2.Start(Me,"BT_Connection",Null)
+		thread1.Start(Me,"monitor_data",Null)
+	End If
+End Sub
+
+Sub BT_Connection
+	tw.Write("Clock" & LblPhoneHH.Text & ":" & LblPhoneMM.Text & ":" & LblPhoneSS.Text)
+	tw.Flush
+End Sub
+
+Sub monitor_data
+'	Do While count = True
+	Do While check_connect = True
+		Bt_input = tr.ReadLine
+		thread1.RunOnGuiThread("monitor_data_show",Array As Object(Bt_input))
+		thread1.Sleep(1000)
+	Loop
+End Sub
+
+Sub monitor_data_show (t As Object)
+	Label1.Text = t
+	If t = "AutoWifion" Then
+		RbtnAuto.Checked = True
+		Lblwifi.Visible = True
+		Lblwifi.Text = Chr(0xE1BA)
+	Else if t = "AutoWifioff" Then
+		RbtnAuto.Checked = True
+		Lblwifi.Visible = True
+		Lblwifi.Text = Chr(0xE1DA)
+	Else if t = "ManWifion" Then
+		RbtnMan.Checked = True
+		Lblwifi.Visible = True
+		Lblwifi.Text = Chr(0xE1BA)
+	Else if t = "ManWifioff" Then
+		RbtnMan.Checked = True
+		Lblwifi.Visible = True
+		Lblwifi.Text = Chr(0xE1DA)
+	Else If t = "Wifioff" Then
+		wifi = False
+		Lblwifi.Text = Chr(0xE1DA)
+		Lblwifi.Enabled = True
+	Else If t = "Wifion" Then
+		wifi = True
+		Lblwifi.Text = Chr(0xE1BA)
+		Lblwifi.Enabled = True		
+	End If	
+End Sub
+
+Sub Timer1_Tick
+	Dim now As Long
+	now = DateTime.Now
+'	LblPhoneHH.TextColor=Colors.Black
+	LblPhoneHH.Text= NumberFormat(DateTime.GetHour(now),2,0)
+'	LblPhoneHH.Text = NumberFormat(DateTime.GetHour(now),0,0)
+	LblPhoneMM.Text = NumberFormat(DateTime.GetMinute(now),2,0)
+	LblPhoneSS.Text = NumberFormat(DateTime.GetSecond(now),2,0)
+'	lblDate.Text = DateTime.Date(DateTime.Now)
+	LblPhoneHH.Visible = True
+	LblPhoneHM.Visible = True
+	LblPhoneMM.Visible = True
+	LblPhoneMS.Visible = True
+	LblPhoneSS.Visible = True
+End Sub
+
+Private Sub RbtnAuto_CheckedChange(Checked As Boolean)
+	Try
+		Lblwifi.Enabled = False
+		thread2.Start(Me,"BT_Automatic",Null)
+	Catch
+		ToastMessageShow("Bluetooth connection",False)
+	End Try
+End Sub
+
+Sub BT_Automatic
+	tw.Write("Automatic")
+	tw.Flush
+End Sub
+
+Private Sub RBtnMan_CheckedChange(Checked As Boolean)
+	Try
+		thread2.Start(Me,"BT_Manual",Null)
+		thread1.Start(Me,"monitor_data",Null)
+	Catch
+		ToastMessageShow("Bluetooth connection",False)
+	End Try
+End Sub
+
+Sub BT_Manual
+	tw.Write("Manual")
+	tw.Flush
+End Sub
+
+Private Sub RadioBTon_CheckedChange(Checked As Boolean)
+	BT_check = True
+End Sub
+
+Private Sub RadioBToff_CheckedChange(Checked As Boolean)
+	BT_check = False
+End Sub
+
+Private Sub Lblwifi_Click
+	Try
+		If wifi=False Then
+			thread2.Start(Me,"Wifi_on",Null)
+		Else
+			thread2.Start(Me,"Wifi_off",Null)
+		End If
+	Catch
+		ToastMessageShow("Bluetooth connection",False)
+	End Try
+End Sub
+
+Sub Wifi_on
+	tw.Write("Wifi on")
+	tw.Flush
+End Sub
+
+Sub Wifi_off
+	tw.Write("Wifi off")
+	tw.Flush
+End Sub
+
+Private Sub LblSave_Click
+	Try
+		LblCan.Visible = True
+		Panel.Visible = True
+		SettingFlag = SettingFlag + 1
+		If SettingFlag = 3 Then
+			SettingFlag = 0
+		End If
+		If SettingFlag = 0 Then
+			If Skiplevel = False Then
+				tw.Write("Off" & EdtWifiHH.Text & ":" & EdtWifiMM.Text & ":" & EdtWifiSS.Text)
+				tw.Flush
+			End If
+			Panel.Visible = False
+			LblCan.Visible = False
+			LblNext.visible = False
+			RbtnMan.Enabled = True
+			RbtnAuto.Enabled = True
+			LblDevice.Visible = False
+			EdtWifiHH.Visible = False
+			EdtWifiMM.Visible = False
+			EdtWifiSS.Visible = False
+'			LblDes.Visible = False
+'			RadioBTon.Visible = False
+'			RadioBToff.Visible = False
+			LblSave.Text = Chr(0xF013)		'Setting
+			LblBack.Text = Chr(0xF0E2)
+			
+		Else If SettingFlag = 1 Then
+			thread2.Start(Me,"BL_Setting",Null)
+			LblSave.Text = "Next"
+			LblSave.Text = Chr(0xF05D)
+			LblBack.Text = Chr(0xF190)
+			LblDevice.Text = "Wifi on"
+			LblDevice.Visible = True
+			EdtWifiHH.Visible = True
+			EdtWifiMM.Visible = True
+			EdtWifiSS.Visible = True
+'			LblDes.Visible = True
+'			RadioBTon.Visible = True
+'			RadioBToff.Visible = True
+'			If turn_bluetooth.Bluetooth Then
+'				RadioBToff.Checked = True
+'			Else
+'				RadioBTon.Checked = True
+'			End If
+			
+		Else If SettingFlag = 2 Then
+			If Skiplevel = False Then
+				tw.Write("On" & EdtWifiHH.Text & ":" & EdtWifiMM.Text & ":" & EdtWifiSS.Text)
+				tw.Flush
+			End If
+			'thread2.Start(Me,"BL_Setting",Null)
+'			LblSave.Text = "Finish"
+			LblSave.Text = Chr(0xF05D)
+			LblBack.Text = Chr(0xF190)
+			LblDevice.Text = "Wifi off"
+			LblBack.Visible = True
+			LblDevice.Visible = True
+			EdtWifiHH.Visible = True
+			EdtWifiMM.Visible = True
+			EdtWifiSS.Visible = True
+	
+			
+		End If
+		Skiplevel = False
+	Catch
+		ToastMessageShow("Bluetooth connection",False)
+	End Try
+End Sub
+
+Sub BL_Save
+	tw.Write("Save")
+	tw.Flush
+End Sub
+
+Sub BL_Setting
+	tw.Write("Setting")
+	tw.Flush
+End Sub
+
+Private Sub LblCan_Click
+	Try
+		LblCan.Visible = False
+		Panel.Visible = False
+		
+		thread2.Start(Me,"BL_Cansel",Null)
+'		LblSave.Text = "Setting"
+		LblSave.Text = Chr(0xF013)
+		
+		LblBack.Text = Chr(0xF0E2)
+		
+		SettingFlag = 0
+		LblNext.visible = False
+		LblCan.visible = False
+		
+		RbtnAuto.Enabled = True
+		RbtnMan.Enabled = True
+		
+		
+		LblDevice.Visible = False
+	
+		EdtWifiHH.Visible = False
+		EdtWifiMM.Visible = False
+		EdtWifiSS.Visible = False
+		
+'		LblDes.Visible = False
+'		RadioBTon.Visible = False
+'		RadioBToff.Visible = False	
+		
+	Catch
+		ToastMessageShow("Bluetooth connection",False)
+	End Try
+End Sub
+
+Sub BL_Cansel
+	tw.Write("Cansel")
+	tw.Flush
+End Sub
+
+'Private Sub LblNext_Click
+'	Try
+'		Skiplevel = True
+'		tw.Write("Skip")
+'		tw.Flush
+'		LblSave_Click
+'	Catch
+'		ToastMessageShow("Bluetooth connection",False)
+'	End Try
+'End Sub
+
+Private Sub Activity_KeyPress (KeyCode As Int) As Boolean 'Return True to consume the event
+	If KeyCode = KeyCodes.KEYCODE_BACK Then
+		If BT_check = False Then
+			turn_bluetooth.TurnBluetoothOff
+		End If
+		ExitApplication
+	End If
+	Return True
+End Sub
+
+
+Private Sub LblBack_Click
+	Try
+		If SettingFlag = 0 Then
+			Panel.Visible = True
+			LblSave.visible = True
+			LblSave.Text = Chr(0xF05C)
+			LblBack.visible = True
+			LblBack.Text = Chr(0xF2DB)
+			LblNext.visible = True
+			LblNext.Text = True
+		End If
+	Catch
+		Log(LastException)
+	End Try
+End Sub
+
+Private Sub LblNext_Click
+	
+End Sub
